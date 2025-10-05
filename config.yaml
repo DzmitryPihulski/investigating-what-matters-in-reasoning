@@ -1,0 +1,62 @@
+slurm_config:
+  slurm_file_name: generated.slurm # which name to use for generated slurm file
+
+  #Standard slurm options for wcss, --verbosity flag is already activated
+  job-name: pllum_70b
+  time: 3-00:00:00
+  nodes: 4
+  exclude: r16-11,r16-12,r16-13,r16-14
+  gres: gpu:hopper:4,storage:local:120G,storage:lustre:1
+  ntasks-per-node: 1
+  cpus-per-task: 16
+  mem: 950G
+  partition: lem-gpu
+  output: job_logs/job-%j.out
+  error: job_logs/job-%j.err
+
+
+folder_full_path: /lustre/pd03/pllum_8b # The name of the folder where the src folder, this config.yaml and submit_job.py are. Used for binding it to the container.
+
+image_name: /home/$USER/dp_storage/images/fine_tune_deepspeed.sif # The path of the .sif file to use for sft
+
+tokenizer_s3_path: user/models/pllum_tokenizer
+
+run_config:
+  model_name: CYFRAGOVPL/Llama-PLLuM-8B-instruct
+  tokenizer_name:
+  dataset_name:
+
+  WANDB_PROJECT: "Pllum 8b on detailed dataset" 
+  WANDB_LOG_MODEL: "false"
+  
+  sft_args:
+    num_train_epochs: 2
+    per_device_train_batch_size: 1
+    gradient_accumulation_steps: 8
+    per_device_eval_batch_size: 1
+    learning_rate: !!float 4e-5
+    dataloader_num_workers: 4
+    logging_steps: 1
+    eval_steps: 0.1
+    save_strategy: epoch
+    save_total_limit: 6
+    logging_strategy: steps
+    eval_strategy: steps
+    optim: adamw
+    weight_decay: 0.1
+    warmup_steps: 50
+    lr_scheduler_type: cosine_with_min_lr
+    max_grad_norm: 1.0
+    max_length: 8192
+    seed: 42
+    data_seed: 42
+    packing: False
+    half_precision_backend: auto
+    dataloader_drop_last: False
+    dataloader_num_workers: 12
+    dataloader_pin_memory: True
+    completion_only_loss: True
+    group_by_length: False
+    remove_unused_columns: True
+    report_to: "wandb"
+    gradient_checkpointing: True
